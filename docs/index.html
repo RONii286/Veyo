@@ -2,7 +2,6 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <!-- Viewport-Skalierung & Mobile App Tags für Veyo -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0a0f1f">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -11,35 +10,47 @@
     
     <title>Veyo – NotenManager</title>
     
-    <!-- PWA Web-Manifest & App-Icons -->
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="icon192.png">
-
-    <!-- Verknüpfung mit deiner externen CSS-Datei -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- KOPFZEILE / NAVBAR -->
+    <!-- KOPFZEILE -->
     <header class="header">
         <div class="header-left">
-            <div style="position: relative;">
-                <button class="menu-btn" id="menuToggle" aria-label="Menü öffnen">☰</button>
-                <nav class="dropdown-menu" id="dropdownMenu">
-                    <button class="dropdown-item" onclick="switchView('dashboard')">📊 Übersicht</button>
-                    <button class="dropdown-item" onclick="switchView('calendar')">📅 Kalender</button>
-                </nav>
-            </div>
+            <button class="menu-btn" id="menuToggle" aria-label="Menü öffnen" type="button">☰</button>
             <h1>Veyo</h1>
+        </div>
+        <div class="header-right">
+            <!-- Stufe / Klasse Schnellauswahl -->
+            <select id="global-class-select" onchange="filterByClass()" class="select-badge">
+                <option value="all">Alle Klassen / Stufen</option>
+                <option value="5">Klasse 5</option>
+                <option value="6">Klasse 6</option>
+                <option value="7">Klasse 7</option>
+                <option value="8">Klasse 8</option>
+                <option value="9">Klasse 9</option>
+                <option value="10">Klasse 10</option>
+                <option value="11">Klasse 11 / Q1</option>
+                <option value="12">Klasse 12 / Q2</option>
+            </select>
         </div>
     </header>
 
-    <!-- HAUPTCONTAINER -->
+    <!-- NAVIGATIONSDRAWER (FÜR MOBILE & DESKTOP) -->
+    <nav class="dropdown-menu" id="dropdownMenu">
+        <button class="dropdown-item" type="button" onclick="switchView('dashboard')">📊 Dashboard & Noten</button>
+        <button class="dropdown-item" type="button" onclick="switchView('classes')">🏫 Klassenübersicht</button>
+        <button class="dropdown-item" type="button" onclick="switchView('calendar')">📅 Termine & Prüfungen</button>
+        <button class="dropdown-item" type="button" onclick="switchView('analytics')">📈 Analysen & Ziel-Rechner</button>
+    </nav>
+
     <div class="container">
         
-        <!-- DASHBOARD-ANSICHT -->
+        <!-- VIEW: DASHBOARD -->
         <main id="view-dashboard">
-            <section class="dashboard">
+            <section class="dashboard-stats">
                 <div class="stat-card primary">
                     <h2>Gesamtdurchschnitt</h2>
                     <div class="stat-value" id="overall-avg">-</div>
@@ -50,44 +61,110 @@
                     <div class="stat-subvalue" id="best-subject">-</div>
                     <div class="small" id="best-subject-avg">Schnitt: -</div>
                 </div>
+                <div class="stat-card">
+                    <h2>Aktuelle Stufe</h2>
+                    <div class="stat-subvalue" id="current-class-display">Alle Stufen</div>
+                    <div class="small" id="class-subject-count">0 Fächer</div>
+                </div>
             </section>
 
             <section class="controls">
-                <input type="text" id="search-input" placeholder="Fach suchen..." oninput="renderDashboard()">
-                <button class="btn btn-primary" onclick="openModal('addSubjectModal')">+ Fach</button>
-                <button class="btn btn-secondary" onclick="openModal('addGradeModal')">+ Note</button>
+                <div class="search-bar">
+                    <input type="text" id="search-input" placeholder="Fach oder Kategorie suchen..." oninput="renderDashboard()">
+                </div>
+                <div class="button-group">
+                    <button class="btn btn-primary" type="button" onclick="openModal('addSubjectModal')">+ Fach</button>
+                    <button class="btn btn-secondary" type="button" onclick="openModal('addGradeModal')">+ Note</button>
+                </div>
             </section>
 
+            <!-- KLASSEN-FILTER TABS -->
+            <div class="class-tabs" id="class-tabs-container">
+                <button class="tab-btn active" type="button" onclick="setActiveClassFilter('all')">Alle</button>
+                <!-- Dynamisch erzeugte Klassen-Tabs erscheinen hier -->
+            </div>
+
+            <!-- FÄCHER GRID -->
             <section class="subjects-grid" id="subjects-grid">
-                <!-- Dynamisch erzeugte Fächer-Karten erscheinen hier -->
+                <!-- Dynamische Fach-Karten -->
             </section>
         </main>
 
-        <!-- KALENDER-ANSICHT -->
+        <!-- VIEW: KLASSENÜBERSICHT -->
+        <section id="view-classes" class="view-hidden">
+            <div class="section-header">
+                <h2>Klassen- & Stufenverwaltung</h2>
+                <button class="btn btn-primary" type="button" onclick="openModal('addClassModal')">+ Neue Klasse/Stufe</button>
+            </div>
+            <div id="classes-list-grid" class="classes-grid">
+                <!-- Klassen-Karten -->
+            </div>
+        </section>
+
+        <!-- VIEW: KALENDER & PRÜFUNGEN -->
         <section id="view-calendar" class="view-hidden">
-            <button class="btn btn-secondary" style="margin-bottom: 1.5rem;" onclick="switchView('dashboard')">← Zurück</button>
-            <h2 style="margin-bottom: 1rem;">Termine & Arbeiten</h2>
-            <button class="btn btn-primary" style="margin-bottom: 1rem;" onclick="openModal('addEventModal')">+ Termin hinzufügen</button>
-            <div id="events-list">
-                <!-- Dynamisch erzeugte Termine erscheinen hier -->
+            <div class="section-header">
+                <h2>Anstehende Prüfungen & Termine</h2>
+                <button class="btn btn-primary" type="button" onclick="openModal('addEventModal')">+ Termin eintragen</button>
+            </div>
+            <div id="events-list" class="events-list">
+                <!-- Event-Einträge -->
+            </div>
+        </section>
+
+        <!-- VIEW: ANALYEN & ZIEL-RECHNER (NEUES FEATURE) -->
+        <section id="view-analytics" class="view-hidden">
+            <div class="section-header">
+                <h2>Wunsch-Schnitt Rechner</h2>
+            </div>
+            <div class="calculator-card">
+                <h3>Was brauche ich für meine Wunsch-Note?</h3>
+                <div class="form-group">
+                    <label for="target-subject-select">Fach wählen</label>
+                    <select id="target-subject-select" onchange="calculateRequiredGrade()"></select>
+                </div>
+                <div class="form-group">
+                    <label for="target-desired-avg">Angestrebter Schnitt</label>
+                    <input type="number" id="target-desired-avg" step="0.1" value="2.0" oninput="calculateRequiredGrade()">
+                </div>
+                <div class="form-group">
+                    <label for="target-next-weight">Gewichtung der nächsten Prüfung</label>
+                    <input type="number" id="target-next-weight" value="1.0" step="0.5" oninput="calculateRequiredGrade()">
+                </div>
+                <div class="result-box" id="target-result">
+                    Wähle ein Fach aus, um das Ergebnis zu berechnen.
+                </div>
             </div>
         </section>
 
     </div>
 
-    <!-- MODALS / DIALOG-FENSTER -->
+    <!-- MODALS -->
 
-    <!-- Modal: Fach hinzufügen -->
+    <!-- Modal: Fach hinzufügen (mit Klassenunterteilung) -->
     <div class="modal" id="addSubjectModal">
         <div class="modal-content">
-            <h2>Fach hinzufügen</h2>
+            <h2>Neues Fach anlegen</h2>
             <div class="form-group">
                 <label for="subject-name">Name des Fachs</label>
                 <input type="text" id="subject-name" placeholder="z. B. Mathematik">
             </div>
+            <div class="form-group">
+                <label for="subject-class-select">Zuordnung Klasse / Stufe</label>
+                <select id="subject-class-select">
+                    <option value="5">Klasse 5</option>
+                    <option value="6">Klasse 6</option>
+                    <option value="7">Klasse 7</option>
+                    <option value="8">Klasse 8</option>
+                    <option value="9">Klasse 9</option>
+                    <option value="10" selected>Klasse 10</option>
+                    <option value="11">Klasse 11 / Q1</option>
+                    <option value="12">Klasse 12 / Q2</option>
+                </select>
+            </div>
             <div class="modal-actions">
-                <button class="btn btn-secondary" onclick="closeModal('addSubjectModal')">Abbrechen</button>
-                <button class="btn btn-primary" onclick="addSubject()">Speichern</button>
+                <button class="btn btn-secondary" type="button" onclick="closeModal('addSubjectModal')">Abbrechen</button>
+                <button class="btn btn-primary" type="button" onclick="addSubject()">Speichern</button>
             </div>
         </div>
     </div>
@@ -97,7 +174,7 @@
         <div class="modal-content">
             <h2>Note eintragen</h2>
             <div class="form-group">
-                <label for="grade-subject-select">Fach auswählen</label>
+                <label for="grade-subject-select">Fach</label>
                 <select id="grade-subject-select"></select>
             </div>
             <div class="form-group">
@@ -105,12 +182,21 @@
                 <input type="number" id="grade-value" step="0.1" placeholder="z. B. 2.0">
             </div>
             <div class="form-group">
+                <label for="grade-type">Art der Leistung</label>
+                <select id="grade-type">
+                    <option value="Schulaufgabe">Schulaufgabe / Klausur</option>
+                    <option value="Kurzarbeit">Kurzarbeit / Test</option>
+                    <option value="Mündlich">Mündlicher Beitrag</option>
+                    <option value="Referat">Referat / Projekt</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label for="grade-weight">Gewichtung</label>
                 <input type="number" id="grade-weight" value="1" step="0.5">
             </div>
             <div class="modal-actions">
-                <button class="btn btn-secondary" onclick="closeModal('addGradeModal')">Abbrechen</button>
-                <button class="btn btn-primary" onclick="addGrade()">Eintragen</button>
+                <button class="btn btn-secondary" type="button" onclick="closeModal('addGradeModal')">Abbrechen</button>
+                <button class="btn btn-primary" type="button" onclick="addGrade()">Eintragen</button>
             </div>
         </div>
     </div>
@@ -118,7 +204,7 @@
     <!-- Modal: Termin eintragen -->
     <div class="modal" id="addEventModal">
         <div class="modal-content">
-            <h2>Termin eintragen</h2>
+            <h2>Termin / Prüfung eintragen</h2>
             <div class="form-group">
                 <label for="event-title">Bezeichnung</label>
                 <input type="text" id="event-title" placeholder="z. B. Mathe Schulaufgabe">
@@ -128,13 +214,12 @@
                 <input type="date" id="event-date">
             </div>
             <div class="modal-actions">
-                <button class="btn btn-secondary" onclick="closeModal('addEventModal')">Abbrechen</button>
-                <button class="btn btn-primary" onclick="addEvent()">Speichern</button>
+                <button class="btn btn-secondary" type="button" onclick="closeModal('addEventModal')">Abbrechen</button>
+                <button class="btn btn-primary" type="button" onclick="addEvent()">Speichern</button>
             </div>
         </div>
     </div>
 
-    <!-- Verknüpfung mit deiner externen JavaScript-Datei -->
     <script src="script.js"></script>
 </body>
 </html>
